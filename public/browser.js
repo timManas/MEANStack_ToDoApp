@@ -8,10 +8,15 @@ function itemTemplate(item) {
   </li>`
 }
 
+// Initial Page load Render
+let ourHTML = items.map(function(item){     // Note: Map will Actually return an Array
+    return itemTemplate(item)
+}).join("")
+document.getElementById("item-list").insertAdjacentHTML("beforeend", ourHTML)
 
-let createField = document.getElementById("create-field")
 
 // Create
+let createField = document.getElementById("create-field")
 document.getElementById("create-form").addEventListener("submit", function (e) {
     e.preventDefault()
 
