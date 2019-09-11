@@ -4,8 +4,17 @@ let express = require("express")
 // Remember: You need to Install MongoDB as well for every new project
 let mongodb = require("mongodb")
 
+// Remember: You need to install this to prevent malicious Java script injection
+let sanitizeHTML = require("sanitize-html")
+
 // package.json is the receipe list of this applicaition
 let app = express()
+
+// This is for hosting port on Heroku or wherever
+let port = process.env.PORT
+if(port == null || port == "") {
+  port = 3000
+}
 
 // Create db variable
 let db
@@ -18,7 +27,9 @@ let connectionString = "mongodb+srv://timmanas:Apple@cluster0-9czdc.mongodb.net/
 // Set up the connection to the MongoDB Server. This is also where we instantiate the global variable db
 mongodb.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, client) {
     db = client.db()
-    app.listen(3000)    // This is what actually makes your app listen for request
+    
+    // app.listen(3000)  
+    app.listen(port)    // This is what actually makes your app listen for request locally
 })
 
 app.use(express.json())
@@ -28,9 +39,34 @@ app.use(express.json())
 // IF YOU COMMENT THIS LINE, THE PAGE WILL BE BLANK when you submit
 app.use(express.urlencoded({extended: false}))
 
+
+
+function passwordProtected(req, res, next) {
+  
+  // "WWW-Authenticate" will ask the browser for a username password
+  res.set("WWW-Authenticate", "Basic realm='Simple ToDo App'")
+  
+  let password = req.headers.authorization       // Note: this will be encoded in Base64 format
+  let key = "Basic dGltOmBgYGA="
+  console.log("Password: " + password)
+  if(password == key) {        
+    // The "next" argument is part of Express which tells the application to run once we finished this funciton
+    next()
+
+  } else {
+    res.status(401).send("Authetication Required")    // We change the state to be 401 if password failed 
+  }
+}
+
+// Tells Express, use passwordProtected for all URL !!!!!!!   
+// We use this is instead of typing passwordProtected in every URL page (ex. Home, About, ....)
+app.use(passwordProtected)    
+
 // This is the initial get response if we hit the "Homepage which is just '/' "
 // If someone gets a Get response with "/", then we do whatever the function tells us to do =)
-app.get("/", function(req,res){
+// Also notice that we can call as many arguments here. Anyyyy #, But remember to add the "next()" so that it moves the next argument
+// app.get("/", passwordProtected, function(req,res){
+  app.get("/", function(req,res){  
 
     // Fetch all the documents in the DB 
     db.collection("items").find().toArray(function(err, items){
@@ -84,8 +120,10 @@ app.get("/", function(req,res){
 app.post("/create-item", function(req, res){
     // console.log(req.body.item)              // Notice we are referring to request object and internal details ...body.items
     
+    let safeText = sanitizeHTML(req.body.text, {allowedTags: [], allowedAttributes: {}})
+
     // Remmeber MongoDB can contain multiple collection
-    db.collection("items").insertOne({text: req.body.text}, function(err, info){
+    db.collection("items").insertOne({text: safeText}, function(err, info){
         // res.send("Thanks for Submitting")       // We wait until DB saves data onto DB
         // res.redirect("/")
         // res.send("Success")
@@ -95,7 +133,10 @@ app.post("/create-item", function(req, res){
 })
 
 app.post("/update-item", function(req, res) {
-    db.collection("items").findOneAndUpdate({_id: new mongodb.ObjectID(req.body.id)}, {$set: {text: req.body.text}}, function() {
+
+  let safeText = sanitizeHTML(req.body.text, {allowedTags: [], allowedAttributes: {}})
+
+    db.collection("items").findOneAndUpdate({_id: new mongodb.ObjectID(req.body.id)}, {$set: {text: safeText}}, function() {
         res.send("Success")
     })
 })
@@ -120,5 +161,8 @@ Notes
 )
 
 4. `` - Back ticks allow user to do something dynamic in the String compared to normal Quotation marks
+
+
+5. We installed (npm install sanitize-html) in order to prevent malicious code being injected via Input Field
 
  */
