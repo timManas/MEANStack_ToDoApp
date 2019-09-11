@@ -1,0 +1,8 @@
+
+
+Pushing Future Changes To Your Heroku App
+If you make additional changes to your local code files and 
+want to push those changes up to Heroku you can simply run this command:
+git add -A
+git commit -m 'Your message to yourself regarding what you changed'
+git push heroku master
