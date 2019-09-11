@@ -6,3 +6,9 @@ want to push those changes up to Heroku you can simply run this command:
 git add -A
 git commit -m 'Your message to yourself regarding what you changed'
 git push heroku master
+
+
+How does Git know where to push through when you do "git push heroku master"
+- "heroku" is the name of the remote that was setup
+- When you typed in "heroku git:remote -a todoapp-trial", it set up the pointer to the location
+- Type in "git remote -v" to see the list of remote locations for this repository
